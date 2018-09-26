@@ -2,7 +2,7 @@
 
 This library executes SQL migration scripts and keeps track of their meta information.
 
-Scripts are be executed exactly once and any changes to scripts will cause an error notifying you of a corrupted database.
+Scripts are be executed exactly once and any changes to scripts will cause an error notifying you of a corrupted database. If a migration script is removed, it will be rolled back.
 
 The meta information consists of:
 

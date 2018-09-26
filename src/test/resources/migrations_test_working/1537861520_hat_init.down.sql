@@ -1,0 +1,3 @@
+DROP TABLE feather CASCADE;
+
+DROP TABLE hat CASCADE;

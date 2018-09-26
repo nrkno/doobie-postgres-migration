@@ -1,9 +1,11 @@
-name := "doobie-migrations-postgres"
+name := "doobie-postgres-migration"
+organization := "no.nrk"
+version := "0.1"
+
 description :=
   """
     |Schema migrations built using doobie for Postgresql
   """.stripMargin
-version := "0.1"
 
 scalaVersion := "2.11.12"
 sbtVersion := "1.1.1"

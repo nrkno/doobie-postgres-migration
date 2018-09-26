@@ -68,4 +68,4 @@ javaOptions in Test := {
   result
 }
 
-test in Test := (dockerRunSnapshot in Test).dependsOn(test in Test).value,
+test in Test := (dockerRunSnapshot in Test).dependsOn(test in Test).value

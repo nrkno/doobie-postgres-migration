@@ -81,3 +81,8 @@ If you are running this from an editor like IDEA, you have to start your own Pos
 To use the default configured URL, user and password run this:
 
 ```docker run --name postgres -e POSTGRES_PASS=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 -d postgres:10.5```
+
+## Other DBs
+This library has a dependency on Postgres only because it is using `doobie.postgres` to transform `List[String]` to a PG Array. It also easier to make sure it is working correctly if only one DB is targeted.
+
+However, it should be relatively easy to extend it to other DBs if need be.

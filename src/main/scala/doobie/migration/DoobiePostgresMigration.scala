@@ -127,7 +127,7 @@ object DoobiePostgresMigration {
           } yield prev :+ fileMigrationTuple
       }
       schemaFiles <- getFileMigrationsAndValidateFileCount(fileMigrationTuples)
-    } yield schemaFiles
+    } yield schemaFiles.sortBy(_.id)
   }
 
   private case class IdDown(id: String, down: String)

@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.2.0"
+version := "0.3.0"
 
 description :=
   """
@@ -12,7 +12,7 @@ sbtVersion := "1.1.1"
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"
 
-val doobieVersion = "0.5.1"
+val doobieVersion = "0.6.0"
 val doobieCore = "org.tpolecat" %% "doobie-core" % doobieVersion
 val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % doobieVersion
 

@@ -7,7 +7,7 @@ description :=
     |Schema migrations built using doobie for Postgresql
   """.stripMargin
 
-scalaVersion := "2.11.12"
+scalaVersion := "2.12.8"
 sbtVersion := "1.1.1"
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"

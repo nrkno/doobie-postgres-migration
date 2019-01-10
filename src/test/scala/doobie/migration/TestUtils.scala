@@ -1,6 +1,7 @@
 package doobie.migration
 
 import cats.effect.IO
+import cats.effect.internals.IOContextShift
 import doobie.util.transactor.Transactor.Aux
 import org.slf4j.LoggerFactory
 
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory
 object TestUtils {
   import doobie._
   import doobie.implicits._
+
+  implicit val contextShift = IOContextShift.global
 
   val testDbPrefix = "doobie_migration_test_"
 

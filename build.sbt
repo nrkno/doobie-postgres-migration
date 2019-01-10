@@ -8,8 +8,6 @@ description :=
   """.stripMargin
 
 crossScalaVersions := Seq("2.11.12", "2.12.8")
-scalaVersion := "2.12.8"
-sbtVersion := "1.1.1"
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"
 

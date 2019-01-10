@@ -1,14 +1,13 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.3.0"
+version := "0.3.1"
 
 description :=
   """
     |Schema migrations built using doobie for Postgresql
   """.stripMargin
 
-scalaVersion := "2.12.8"
-sbtVersion := "1.1.1"
+crossScalaVersions := Seq("2.11.12", "2.12.8")
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"
 

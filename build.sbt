@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.3.1"
+version := "0.4.0"
 
 description :=
   """
@@ -11,7 +11,7 @@ crossScalaVersions := Seq("2.11.12", "2.12.8")
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"
 
-val doobieVersion = "0.6.0"
+val doobieVersion = "0.7.0-M2"
 val doobieCore = "org.tpolecat" %% "doobie-core" % doobieVersion
 val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % doobieVersion
 

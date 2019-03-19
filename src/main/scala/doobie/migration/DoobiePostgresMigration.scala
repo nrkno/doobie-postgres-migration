@@ -190,7 +190,7 @@ object DoobiePostgresMigration {
               |ORDER BY id DESC
               |""".stripMargin.query[IdDown].to[List]
       _ <- if (downMigrations.nonEmpty && !downMode) {
-        raiseError(DoobiePostgresMigrationException("Cannot apply migrations unless down mode is enabled"))
+        raiseError(DoobiePostgresMigrationException("Cannot apply down migrations unless down mode is enabled"))
       } else unit
       _ <- downMigrations.traverse[ConnectionIO, Unit] { curr =>
         val id = curr.id

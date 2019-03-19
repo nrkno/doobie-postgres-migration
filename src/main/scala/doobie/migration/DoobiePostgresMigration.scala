@@ -32,21 +32,22 @@ object DoobiePostgresMigration {
     * Execute all migrations based in the directory. This will apply downs for any files present.
     * @param migrationsDir
     * @param xa
+    * @param downMode if true, downs WILL be applied (so: downMode should be disabled in prod)
     */
-  def execute(migrationsDir: File, xa: Aux[IO, _]): Unit = {
+  def execute(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean): Unit = {
     try {
-      getIO(migrationsDir, xa).unsafeRunSync()
+      executeMigrationsIO(migrationsDir, xa, downMode).unsafeRunSync()
     } catch {
       case ex : Exception =>
         logger.error(s"Could not apply schema migrations:\n${ex.getMessage}", ex)
     }
   }
 
-  def getIO(migrationsDir: File, xa: Aux[IO, _]): IO[List[Migration]] = {
+  def executeMigrationsIO(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean): IO[List[Migration]] = {
     import doobie.implicits._
     for {
       migrations <- getMigrations(migrationsDir)
-      _ <- applyMigrations(migrations).transact(xa)
+      _ <- applyMigrations(migrations, downMode).transact(xa)
     } yield migrations
   }
 
@@ -137,7 +138,7 @@ object DoobiePostgresMigration {
     MessageDigest.getInstance("MD5").digest(str.getBytes).map("%02X".format(_)).mkString
   }
 
-  private[migration] def applyMigrations(migrations: List[Migration]): ConnectionIO[_] = {
+  private[migration] def applyMigrations(migrations: List[Migration], downMode: Boolean): ConnectionIO[_] = {
     import doobie._
     import doobie.FC.{ delay,raiseError, unit }
     import cats.implicits._
@@ -188,6 +189,9 @@ object DoobiePostgresMigration {
               |WHERE NOT id = ANY($fileIds)
               |ORDER BY id DESC
               |""".stripMargin.query[IdDown].to[List]
+      _ <- if (downMigrations.nonEmpty && !downMode) {
+        raiseError(DoobiePostgresMigrationException("Cannot apply migrations unless down mode is enabled"))
+      } else unit
       _ <- downMigrations.traverse[ConnectionIO, Unit] { curr =>
         val id = curr.id
         for {

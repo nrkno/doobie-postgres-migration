@@ -30,7 +30,7 @@ import doobie._
 import doobie.migration.{DoobiePostgresMigration, DoobiePostgresMigrationException}
 import cats.effect.IO
 
-val xa : Aux[IO, Unit] = ??? // TODO
+val xa : Aux[IO, _] = ??? // TODO
 try {
   DoobiePostgresMigration.execute(new File("./migrations"), xa) // assumes you have migrations in this dir
 } catch (ex) {

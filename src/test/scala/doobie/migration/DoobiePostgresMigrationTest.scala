@@ -22,7 +22,7 @@ class DoobiePostgresMigrationTest extends FunSuite {
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
 
   // used only to create DBs
-  lazy val hostXa: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
+  lazy val hostXa: Aux[IO, _] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver", pgUrl, pgUser, pgPass
   )
 

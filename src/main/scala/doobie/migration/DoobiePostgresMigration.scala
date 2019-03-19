@@ -33,7 +33,7 @@ object DoobiePostgresMigration {
     * @param migrationsDir
     * @param xa
     */
-  def execute(migrationsDir: File, xa: Aux[IO, Unit]): Unit = {
+  def execute(migrationsDir: File, xa: Aux[IO, _]): Unit = {
     try {
       getIO(migrationsDir, xa).unsafeRunSync()
     } catch {
@@ -42,7 +42,7 @@ object DoobiePostgresMigration {
     }
   }
 
-  def getIO(migrationsDir: File, xa: Aux[IO, Unit]): IO[List[Migration]] = {
+  def getIO(migrationsDir: File, xa: Aux[IO, _]): IO[List[Migration]] = {
     import doobie.implicits._
     for {
       migrations <- getMigrations(migrationsDir)

@@ -21,7 +21,7 @@ object TestUtils {
 
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def withTestDb[A](testXa: Aux[IO, Unit], url: String, user: String, pass: String, uniqueTestDbNameSuffix: String)(f : Aux[IO, Unit] => A) = {
+  def withTestDb[A](testXa: Aux[IO, _], url: String, user: String, pass: String, uniqueTestDbNameSuffix: String)(f : Aux[IO, Unit] => A) = {
     import doobie.implicits._
     import cats.implicits._
 

@@ -33,21 +33,22 @@ object DoobiePostgresMigration {
     * @param migrationsDir
     * @param xa
     * @param downMode if true, downs WILL be applied (so: downMode should be disabled in prod)
+    * @param schema the name of the database schema (not the schema migrations)
     */
-  def execute(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean): Unit = {
+  def execute(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean, schema: String = "public"): Unit = {
     try {
-      executeMigrationsIO(migrationsDir, xa, downMode).unsafeRunSync()
+      executeMigrationsIO(migrationsDir, xa, downMode, schema).unsafeRunSync()
     } catch {
       case ex : Exception =>
         logger.error(s"Could not apply schema migrations:\n${ex.getMessage}", ex)
     }
   }
 
-  def executeMigrationsIO(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean): IO[List[Migration]] = {
+  def executeMigrationsIO(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean, schema: String): IO[List[Migration]] = {
     import doobie.implicits._
     for {
       migrations <- getMigrations(migrationsDir)
-      _ <- applyMigrations(migrations, downMode).transact(xa)
+      _ <- applyMigrations(migrations, downMode, schema).transact(xa)
     } yield migrations
   }
 
@@ -138,7 +139,7 @@ object DoobiePostgresMigration {
     MessageDigest.getInstance("MD5").digest(str.getBytes).map("%02X".format(_)).mkString
   }
 
-  private[migration] def applyMigrations(migrations: List[Migration], downMode: Boolean): ConnectionIO[_] = {
+  private[migration] def applyMigrations(migrations: List[Migration], downMode: Boolean, schema: String): ConnectionIO[_] = {
     import doobie._
     import doobie.FC.{ delay,raiseError, unit }
     import cats.implicits._
@@ -157,7 +158,7 @@ object DoobiePostgresMigration {
     val validateSchemaSql =
       sql"""|SELECT 5 = (
             |  SELECT COUNT(*) FROM information_schema.columns
-            |  WHERE table_name = 'schema_migration' AND (
+            |  WHERE table_name = 'schema_migration' AND table_schema = $schema AND (
             |    (lower(column_name) = 'id' AND upper(data_type) = 'TEXT' AND upper(is_nullable) = 'NO')
             |    OR
             |    (lower(column_name) = 'md5' AND upper(data_type) = 'TEXT' AND upper(is_nullable) = 'NO')

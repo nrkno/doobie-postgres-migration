@@ -54,16 +54,18 @@ class DoobiePostgresMigrationTest extends FunSuite {
       """.stripMargin)
   )
 
+  val DefaultSchema = "public"
+
   test("basic apply migrations") {
     TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "apply_migrations") { xa =>
       import doobie.implicits._
       import cats.implicits._
 
       // apply all ups
-      DoobiePostgresMigration.applyMigrations(testMigrations, true).transact(xa).unsafeRunSync
+      DoobiePostgresMigration.applyMigrations(testMigrations, true, DefaultSchema).transact(xa).unsafeRunSync
 
       // apply one down
-      DoobiePostgresMigration.applyMigrations(testMigrations.init, true).transact(xa).unsafeRunSync
+      DoobiePostgresMigration.applyMigrations(testMigrations.init, true, DefaultSchema).transact(xa).unsafeRunSync
 
       val testHatName = "fedora"
       sql"""INSERT INTO hat(name) values($testHatName);""".update.run.transact(xa).unsafeRunSync()
@@ -72,9 +74,9 @@ class DoobiePostgresMigrationTest extends FunSuite {
       }
 
       // apply all downs
-      DoobiePostgresMigration.applyMigrations(List.empty, true).transact(xa).unsafeRunSync
+      DoobiePostgresMigration.applyMigrations(List.empty, true, DefaultSchema).transact(xa).unsafeRunSync
       // apply all ups
-      DoobiePostgresMigration.applyMigrations(testMigrations, true).transact(xa).unsafeRunSync
+      DoobiePostgresMigration.applyMigrations(testMigrations, true, DefaultSchema).transact(xa).unsafeRunSync
 
       // should now work, but data was lost... :/ such is life
       sql"""INSERT INTO hat(name) values($testHatName);""".update.run.transact(xa).unsafeRunSync()

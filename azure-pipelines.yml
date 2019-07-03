@@ -11,9 +11,10 @@ pool:
 
 steps:
 - task: Bash@3
+  displayName: 'Install sbt'
   inputs:
     targetType: 'inline'
-    script: 'apt-get install sbt'
+    script: 'apt-get update; apt-get --yes install wget; wget https://dl.bintray.com/sbt/debian/sbt-1.2.8.deb; dpkg -i sbt-1.2.8.deb;'
 - task: Bash@3
   inputs:
     targetType: 'inline'

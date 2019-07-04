@@ -10,12 +10,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: Bash@3
-  displayName: 'Install sbt'
+- task: DockerInstaller@0
   inputs:
-    targetType: 'inline'
-    script: 'apt-get update; apt-get --yes install wget; wget https://dl.bintray.com/sbt/debian/sbt-1.2.8.deb; dpkg -i sbt-1.2.8.deb;'
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'sbt compile'
+    dockerVersion: '17.09.0-ce'

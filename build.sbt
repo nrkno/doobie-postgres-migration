@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.5.0"
+version := "0.5.1"
 
 description :=
   """
@@ -70,3 +70,13 @@ javaOptions in Test := {
 }
 
 test in Test := (dockerRunSnapshot in Test).dependsOn(test in Test).value
+
+publishTo := {
+  val MyGet = "https://www.myget.org/F/nrk/maven"
+  if (isSnapshot.value)
+    Some("snapshots" at MyGet)
+  else
+    Some("releases" at MyGet)
+}
+
+credentials += Credentials(Path(System.getenv("FILES")) / ".credentials")

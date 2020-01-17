@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.5.1"
+version := "0.6.1"
 
 description :=
   """
@@ -79,4 +79,6 @@ publishTo := {
     Some("releases" at MyGet)
 }
 
-credentials += Credentials(Path(System.getenv("FILES")) / ".credentials")
+credentials ++= (for {
+  dir <- Option(System.getenv("FILES")).toSeq
+} yield Credentials(file(dir) / ".credentials"))

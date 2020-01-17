@@ -61,7 +61,7 @@ object DoobiePostgresMigration {
   private case class MigrationFromFileUp(id: String, up: String) extends MigrationFromFile
   private case class MigrationFromFileDown(id: String, down: String) extends MigrationFromFile
 
-  private[migration] def getMigrations(migrationsDir: File): IO[List[Migration]] = {
+  def getMigrations(migrationsDir: File): IO[List[Migration]] = {
     import cats.effect.IO._
     import cats.implicits._
 
@@ -139,7 +139,7 @@ object DoobiePostgresMigration {
     MessageDigest.getInstance("MD5").digest(str.getBytes).map("%02X".format(_)).mkString
   }
 
-  private[migration] def applyMigrations(migrations: List[Migration], downMode: Boolean, schema: String): ConnectionIO[_] = {
+  def applyMigrations(migrations: List[Migration], downMode: Boolean, schema: String): ConnectionIO[_] = {
     import doobie._
     import doobie.FC.{ delay,raiseError, unit }
     import cats.implicits._
@@ -147,14 +147,14 @@ object DoobiePostgresMigration {
     import doobie.postgres.implicits._
 
     val createSchemaMigration =
-      sql"""|CREATE TABLE IF NOT EXISTS schema_migration (
+      (sql"""|CREATE TABLE IF NOT EXISTS """ ++ Fragment.const(schema + ".schema_migration") ++ sql""" (
             |  id TEXT PRIMARY KEY,
             |  md5 TEXT NOT NULL,
             |  up TEXT NOT NULL,
             |  down TEXT NOT NULL,
             |  created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
             |)
-        """.stripMargin.update.run
+        """).stripMargin.update.run
     val validateSchemaSql =
       sql"""|SELECT 5 = (
             |  SELECT COUNT(*) FROM information_schema.columns

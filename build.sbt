@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.6.0"
+version := "0.6.1"
 
 description :=
   """

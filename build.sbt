@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.6.1"
+version := "0.6.2"
 
 description :=
   """
@@ -29,7 +29,7 @@ val loggerLibs = Seq(
 libraryDependencies ++= loggerLibs
 
 val testLibs = Seq(
-  "org.scalatest" %% "scalatest" % "3.0.4" % "test",
+  "org.scalatest" %% "scalatest" % "3.1.0" % "test",
 )
 
 libraryDependencies ++= testLibs

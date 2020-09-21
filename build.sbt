@@ -1,17 +1,17 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.6.1"
+version := "0.6.2"
 
 description :=
   """
     |Schema migrations built using doobie for Postgresql
   """.stripMargin
 
-crossScalaVersions := Seq("2.11.12", "2.12.8")
+crossScalaVersions := Seq("2.12.8", "2.13.1")
 
 val typesafeConfig = "com.typesafe" % "config" % "1.3.2"
 
-val doobieVersion = "0.7.0-M2"
+val doobieVersion = "0.8.8"
 val doobieCore = "org.tpolecat" %% "doobie-core" % doobieVersion
 val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % doobieVersion
 
@@ -29,9 +29,7 @@ val loggerLibs = Seq(
 libraryDependencies ++= loggerLibs
 
 val testLibs = Seq(
-  "org.scalatest" %% "scalatest" % "3.0.4" % "test",
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
-  "org.scalacheck" %% "scalacheck" % "1.13.5" % "test"
+  "org.scalatest" %% "scalatest" % "3.1.0" % "test",
 )
 
 libraryDependencies ++= testLibs

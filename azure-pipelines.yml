@@ -8,6 +8,6 @@ steps:
 - task: DownloadSecureFile@1
   inputs:
     secureFile: .credentials
-- script: sbt publish
+- script: sbt +publish
   env:
     FILES: $(Agent.TempDirectory)

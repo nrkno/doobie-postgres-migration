@@ -77,4 +77,6 @@ publishTo := {
     Some("releases" at MyGet)
 }
 
-credentials += Credentials(Path(System.getenv("FILES")) / ".credentials")
+credentials ++= (for {
+  dir <- Option(System.getenv("FILES")).toSeq
+} yield Credentials(file(dir) / ".credentials"))

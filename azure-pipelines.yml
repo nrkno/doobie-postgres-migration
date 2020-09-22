@@ -5,6 +5,77 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:10
+- task: Bash@3
+  displayName: Test PG 10
+  inputs:
+    targetType: 'inline'
+    script: |
+      sbt test
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'PG 10'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:11
+- task: Bash@3
+  displayName: Test PG 11
+  inputs:
+    targetType: 'inline'
+    script: |
+      sbt test
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'PG 11'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:12
+- task: Bash@3
+  displayName: Test PG 12
+  inputs:
+    targetType: 'inline'
+    script: |
+      sbt test
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'PG 12'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:13
+- task: Bash@3
+  displayName: Test PG 13
+  inputs:
+    targetType: 'inline'
+    script: |
+      sbt test
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'PG 13'
 - task: DownloadSecureFile@1
   inputs:
     secureFile: .credentials

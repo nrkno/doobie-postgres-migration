@@ -216,7 +216,7 @@ object DoobiePostgresMigration {
         for {
           _ <- delay(logger.warn(s"Applying downs from: ${idToDownFilePath(id)}!"))
           _ <- Update0(curr.down, None).run.handleErrorWith { case ex: Exception =>
-              raiseError(DoobiePostgresMigrationException(s"Failed while applying downs from '${idToDownFilePath(id)}':\n${curr.down}", ex))
+              raiseError(DoobiePostgresMigrationException(s"Failed while applying downs from '${idToDownFilePath(id)}':\n${curr.down}\n\nYou need to manually run the down correctly, then run\nDELETE FROM schema_migration WHERE id = '$id'", ex))
           }
           _ <- sql"""|DELETE FROM schema_migration
                      |WHERE id = $id

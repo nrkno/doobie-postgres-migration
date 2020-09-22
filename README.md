@@ -69,18 +69,19 @@ lazy val root = (project in file(".")).dependsOn(doobiePostgresMigration)
 ## Tests
 ### Requirements
 - sbt
-- docker
- 
+- (docker)
+
+Prior to executing tests you must have a Postgresql DB running and accepting connections on the url / credentials defined in `src/test/resouces/test.conf`.
+
+Using docker you can start (on port 5431) it as follows:
+
+```
+docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:11.2
+```
+
 To execute all tests do this:
 
 `sbt test`
-
-This will download a docker postgres image, start it and execute the tests.
-
-If you are running this from an editor like IDEA, you have to start your own Postgres.
-To use the default configured URL, user and password run this:
-
-```docker run --name postgres -e POSTGRES_PASS=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 -d postgres:10.5```
 
 ## Other DBs
 This library has a dependency on Postgres only because it is using `doobie.postgres` to transform `List[String]` to a PG Array. It also easier to make sure it is working correctly if only one DB is targeted.

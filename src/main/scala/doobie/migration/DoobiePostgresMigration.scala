@@ -19,7 +19,17 @@ case class DoobiePostgresMigrationException(msg: String, ex: Exception = null) e
   * @param up the sql that will be applied to go 'up' or to the next version of the DB schema
   * @param down the sql that will be applied to rollback one version from current version of DB schema
   */
-case class Migration(id: String, up: String, down: String)
+case class Migration private (id: String, up: String, down: String, md5: String)
+
+object Migration {
+  def create(id: String, up: String, down: String) = {
+    Migration(id, up, down, md5Hash(id + up + down))
+  }
+
+  private[migration] def md5Hash(str: String): String = {
+    MessageDigest.getInstance("MD5").digest(str.getBytes).map("%02X".format(_)).mkString
+  }
+}
 
 /**
   * Schema migrations for Postgres using doobie
@@ -44,7 +54,7 @@ object DoobiePostgresMigration {
     }
   }
 
-  def executeMigrationsIO(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean, schema: String): IO[List[Migration]] = {
+  def executeMigrationsIO(migrationsDir: File, xa: Aux[IO, _], downMode: Boolean, schema: String = "public"): IO[List[Migration]] = {
     import doobie.implicits._
     for {
       migrations <- getMigrations(migrationsDir)
@@ -94,7 +104,7 @@ object DoobiePostgresMigration {
             // these matches should never fail because manyUps/Downs should be 1 here
             MigrationFromFileUp(`id`, up) <- manyUps.headOption
             MigrationFromFileDown(`id`, down) <- manyDowns.headOption
-          } yield Migration(id, up, down)
+          } yield Migration.create(id, up, down)
           fileMigration.map(IO.apply(_)).getOrElse {
             val upAbsolutePath = new File(migrationsDir, idToUpFilePath(id)).getAbsolutePath
             val downAbsolutePath = new File(migrationsDir, idToDownFilePath(id)).getAbsolutePath
@@ -132,11 +142,12 @@ object DoobiePostgresMigration {
     } yield schemaFiles.sortBy(_.id)
   }
 
-  private case class IdDown(id: String, down: String)
-  private case class IdMd5(id: String, md5: String)
+  private def idExists(m: Migration, fileMigrations: List[Migration]): Boolean = {
+    fileMigrations.exists(fm => fm.id == m.id)
+  }
 
-  private def md5Hash(str: String): String = {
-    MessageDigest.getInstance("MD5").digest(str.getBytes).map("%02X".format(_)).mkString
+  private def md5HasChanged(m: Migration, fileMigrations: List[Migration]): Boolean = {
+    fileMigrations.exists(fm => m.id == fm.id && m.md5 != fm.md5)
   }
 
   def applyMigrations(migrations: List[Migration], downMode: Boolean, schema: String): ConnectionIO[_] = {
@@ -172,7 +183,17 @@ object DoobiePostgresMigration {
             |)
         """.stripMargin
     val fileIds = migrations.map(_.id)
+    val findMigrations =
+      sql"""|SELECT id, up, down, md5 FROM schema_migration
+            |ORDER BY id DESC
+            |""".stripMargin.query[Migration].to[List]
     for {
+      // step 0: setup migrations
+      migrationsById <- migrations.groupBy(_.id).toList.traverse[ConnectionIO, (String, Migration)] {
+        case (id, (head :: Nil)) => delay(id -> head)
+        case (id, manyOrEmpty) => raiseError(new Exception(s"Expected exactly one migration for id: $id. Found: $manyOrEmpty"))
+      }.map(_.toMap)
+
       // step 1: create schema_migration.
       //         We CREATE IF NOT EXISTS because it is fine if it is already there.
       _ <- createSchemaMigration
@@ -184,16 +205,13 @@ object DoobiePostgresMigration {
         raiseError(DoobiePostgresMigrationException(s"Could not validate `schema_migration` table via: $validateSchemaSql"))
       } else unit
 
-      // step 3: apply all downs that are not present in our dir.
-      downMigrations <-
-        sql"""|SELECT id, down FROM schema_migration
-              |WHERE NOT id = ANY($fileIds)
-              |ORDER BY id DESC
-              |""".stripMargin.query[IdDown].to[List]
-      _ <- if (downMigrations.nonEmpty && !downMode) {
-        raiseError(DoobiePostgresMigrationException("Cannot apply down migrations unless down mode is enabled"))
+      // step 3: apply all downs that are not present or that has changed in our dir.
+      allPreDownDBMigrations <- findMigrations
+      downsToApply = allPreDownDBMigrations.filter(m => !idExists(m, migrations) || md5HasChanged(m, migrations))
+      _ <- if (downsToApply.nonEmpty && !downMode) {
+        raiseError(DoobiePostgresMigrationException(s"Cannot apply down migrations (${downsToApply.map(_.id).mkString(",")}) unless down mode is enabled"))
       } else unit
-      _ <- downMigrations.traverse[ConnectionIO, Unit] { curr =>
+      _ <- downsToApply.traverse[ConnectionIO, Unit] { curr =>
         val id = curr.id
         for {
           _ <- delay(logger.warn(s"Applying downs from: ${idToDownFilePath(id)}!"))
@@ -206,24 +224,19 @@ object DoobiePostgresMigration {
         } yield ()
       }
 
-      // step 4.1: get existing migrations
-      dBIdAndMd5 <-
-        sql"""|SELECT id, md5 FROM schema_migration
-              |WHERE id = ANY($fileIds)
-              |ORDER BY id DESC
-              |""".stripMargin.query[IdMd5].to[List]
-      hashByIdFromDb = dBIdAndMd5.groupBy(_.id)
-      dbIds = dBIdAndMd5.map(_.id)
+      // step 4.1: get post down migrations
+      postDownDBMigrations <- findMigrations
+      existingHashByIdFromDb = postDownDBMigrations.groupBy(_.id)
+      dbIds = postDownDBMigrations.map(_.id)
       highestCurrentId = if (dbIds.nonEmpty) {
         dbIds.max
       } else dbIds.headOption.getOrElse("")
 
-
       // step 4.2: apply up migrations and check existing ones
       _ <- migrations.traverse[ConnectionIO, Unit] { curr =>
         val id = curr.id
-        val fileHash = md5Hash(id + curr.up + curr.down)
-        hashByIdFromDb.get(id) match {
+        val fileHash = curr.md5
+        existingHashByIdFromDb.get(id) match {
           case None => // DB didn't know about this file, so we will apply ups
             val upMigrations = for {
               _ <- Update0(curr.up, None).run.handleErrorWith { case ex: Exception =>
@@ -241,10 +254,10 @@ object DoobiePostgresMigration {
               _ <- delay(logger.info(s"Applying ups from '${idToUpFilePath(id)}'..."))
               _ <- upMigrations
             } yield ()
-          case Some(Seq(IdMd5(`id`, `fileHash`))) =>
+          case Some(Seq(Migration(`id`, _, _, `fileHash`))) =>
             delay(logger.debug(s"Schema and id matches for '$id'. Skipping..."))
-          case Some(Seq(IdMd5(`id`, md5))) =>
-            raiseError(DoobiePostgresMigrationException(s"Wrong hash for '$id'! DB says: '$md5'. Current is: '$fileHash'. Did files: ${idToDownFilePath(id)} and ${idToUpFilePath(id)} change?"))
+          case Some(Seq(Migration(`id`, _, _, md5))) =>
+            raiseError(DoobiePostgresMigrationException(s"Wrong hash for '$id'! DB says: '$md5'. Current is: '$fileHash'. Did files: ${idToDownFilePath(id)} and ${idToUpFilePath(id)} change? NOTE: this should not happen if the downMode is set (downMode is currently: $downMode)"))
           case Some(alts) =>
             raiseError(DoobiePostgresMigrationException(s"Expected to find one or zero pairs with id: '$id', but found: ${alts.mkString(",")}")) // can only happen if id is no longer a PRIMARY KEY
         }

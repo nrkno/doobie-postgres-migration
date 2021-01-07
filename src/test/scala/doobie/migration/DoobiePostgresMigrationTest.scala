@@ -4,12 +4,12 @@ import java.io.File
 
 import cats.effect.IO
 import com.typesafe.config.ConfigFactory
-import doobie.util.transactor.Transactor.Aux
-import org.scalatest.IOMatchers
-import org.scalatest.funsuite.AnyFunSuite
-import scala.concurrent.ExecutionContext
 import doobie._
 import doobie.implicits._
+import org.scalatest.IOMatchers
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.concurrent.ExecutionContext
 
 class DoobiePostgresMigrationTest extends AnyFunSuite with IOMatchers {
   private lazy val config = ConfigFactory.load("test.conf")
@@ -20,7 +20,7 @@ class DoobiePostgresMigrationTest extends AnyFunSuite with IOMatchers {
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
 
   // used only to create DBs
-  lazy val hostXa: Aux[IO, _] = Transactor.fromDriverManager[IO](
+  lazy val hostXa: Transactor[IO] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver", pgUrl, pgUser, pgPass
   )
 

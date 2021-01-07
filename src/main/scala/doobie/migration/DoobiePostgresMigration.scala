@@ -150,7 +150,7 @@ object DoobiePostgresMigration {
     fileMigrations.exists(fm => m.id == fm.id && m.md5 != fm.md5)
   }
 
-  def applyMigrations(migrations: List[Migration], schema: String): ConnectionIO[_] = {
+  def applyMigrations(migrations: List[Migration], schema: String): ConnectionIO[Unit] = {
     import doobie._
     import doobie.FC.{ delay,raiseError, unit }
     import cats.implicits._

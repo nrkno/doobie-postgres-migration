@@ -5,20 +5,14 @@ import java.io.File
 import cats.effect.IO
 import com.typesafe.config.ConfigFactory
 import doobie.util.transactor.Transactor.Aux
-import org.postgresql.util.PSQLException
-import org.scalactic.source
-import org.scalatest.{Assertion, FunSuite, IOMatchers, Resources, Succeeded}
-
+import org.scalatest.IOMatchers
+import org.scalatest.funsuite.AnyFunSuite
 import scala.concurrent.ExecutionContext
-import scala.reflect.ClassTag
-import scala.util.Either
+import doobie._
+import doobie.implicits._
 
-class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
-
-  import doobie._
-
+class DoobiePostgresMigrationTest extends AnyFunSuite with IOMatchers {
   private lazy val config = ConfigFactory.load("test.conf")
-
   private lazy val pgUrl = config.getString("postgres.url")
   private lazy val pgUser = config.getString("postgres.user")
   private lazy val pgPass = config.getString("postgres.pass")
@@ -61,8 +55,6 @@ class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
   val DefaultSchema = "public"
   test("basic apply migrations") {
     TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "apply_migrations") { xa =>
-      import doobie.implicits._
-      import cats.implicits._
 
       for {
         // apply all ups
@@ -90,8 +82,6 @@ class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
 
   test("execute migrations") {
     TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "read_dir_apply_migrations") { xa =>
-      import doobie.implicits._
-
       for {
         _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa)
         testHatName = "fedora"
@@ -102,14 +92,26 @@ class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
 
   test("another test") {
     TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "change_migrations") { xa =>
-      import doobie.implicits._
-
       val testHatName1 = "fedora"
       for {
         // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was fixed by changing it to color
         _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa)
         _ <- sql"""INSERT INTO hat(name) values($testHatName1);""".update.run.transact(xa)
         _ <- sql"""INSERT INTO ribbon(color, hat) values('red', $testHatName1);""".update.run.transact(xa)
+      } yield ()
+    }
+  }
+
+  test("fail on missing migration") {
+    TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "change_migrations") { xa =>
+      for {
+        // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was fixed by changing it to color
+        migrations <- DoobiePostgresMigration.getMigrations(new File("./src/test/resources/migrations_test_working_1"))
+        _ <- DoobiePostgresMigration.applyMigrations(migrations, "public").transact(xa)
+        _ <- DoobiePostgresMigration.applyMigrations(migrations.tail, "public").transact(xa).attempt.flatMap {
+          case Left(_) => IO.unit
+          case Right(_) => IO.raiseError(new RuntimeException("Should have failed on missing migration"))
+        }
       } yield ()
     }
   }

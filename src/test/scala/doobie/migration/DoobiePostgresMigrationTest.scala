@@ -66,21 +66,8 @@ class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
 
       for {
         // apply all ups
-        _ <- DoobiePostgresMigration.applyMigrations(testMigrations, true, DefaultSchema).transact(xa)
-        // apply one down
-        _ <- DoobiePostgresMigration.applyMigrations(testMigrations.init, true, DefaultSchema).transact(xa)
+        _ <- DoobiePostgresMigration.applyMigrations(testMigrations, DefaultSchema).transact(xa)
         testHatName = "fedora"
-        _ <- sql"""INSERT INTO hat(name) values($testHatName);""".update.run.transact(xa)
-        _ <- assertIOLeftException[PSQLException] {
-          sql"""INSERT INTO ribbon(color, hat) values('red', $testHatName);""".update.run.transact(xa).attempt
-        }
-
-        // apply all downs
-        _ <- DoobiePostgresMigration.applyMigrations(List.empty, true, DefaultSchema).transact(xa)
-        // apply all ups
-        _ <- DoobiePostgresMigration.applyMigrations(testMigrations, true, DefaultSchema).transact(xa)
-
-        // should now work, but data was lost... :/ such is life
         _ <- sql"""INSERT INTO hat(name) values($testHatName);""".update.run.transact(xa)
         _ <- sql"""INSERT INTO ribbon(color, hat) values('red', $testHatName);""".update.run.transact(xa)
       } yield ()
@@ -106,26 +93,22 @@ class DoobiePostgresMigrationTest extends FunSuite with IOMatchers {
       import doobie.implicits._
 
       for {
-        _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa, true)
+        _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa)
         testHatName = "fedora"
         _ <- sql"""INSERT INTO hat(name) values($testHatName);""".update.run.transact(xa)
       } yield ()
     }
   }
 
-  test("change migrations files (in dev mode for example)") {
+  test("another test") {
     TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "change_migrations") { xa =>
       import doobie.implicits._
 
       val testHatName1 = "fedora"
       for {
-        // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was "fixed" by dropping the column
-        _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_2"), xa, true)
-        _ <- sql"""INSERT INTO hat(name) values($testHatName1);""".update.run.transact(xa)
-        _ <- sql"""INSERT INTO ribbon(hat) values($testHatName1);""".update.run.transact(xa)
-
         // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was fixed by changing it to color
-        _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa, true)
+        _ <- DoobiePostgresMigration.executeMigrationsIO(new File("./src/test/resources/migrations_test_working_1"), xa)
+        _ <- sql"""INSERT INTO hat(name) values($testHatName1);""".update.run.transact(xa)
         _ <- sql"""INSERT INTO ribbon(color, hat) values('red', $testHatName1);""".update.run.transact(xa)
       } yield ()
     }

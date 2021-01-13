@@ -10,7 +10,6 @@ import cats.instances.list._
 import cats.syntax.applicativeError._
 import cats.syntax.traverse._
 import doobie.implicits._
-import doobie.postgres.implicits._
 
 import scala.io.Source
 
@@ -174,18 +173,11 @@ object DoobiePostgresMigration {
             |  )
             |)
         """.stripMargin
-    val fileIds = migrations.map(_.id)
     val findMigrations =
       sql"""|SELECT id, up, down, md5 FROM schema_migration
             |ORDER BY id DESC
             |""".stripMargin.query[Migration].to[List]
     for {
-      // step 0: setup migrations
-      migrationsById <- migrations.groupBy(_.id).toList.traverse[ConnectionIO, (String, Migration)] {
-        case (id, (head :: Nil)) => FC.delay(id -> head)
-        case (id, manyOrEmpty) => FC.raiseError(new Exception(s"Expected exactly one migration for id: $id. Found: $manyOrEmpty"))
-      }.map(_.toMap)
-
       // step 1: create schema_migration.
       //         We CREATE IF NOT EXISTS because it is fine if it is already there.
       _ <- createSchemaMigration

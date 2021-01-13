@@ -3,6 +3,8 @@ organization := "no.nrk"
 version := "0.7.2-SNAPSHOT"
 description := "Postgresql schema migrations for doobie"
 scalaVersion := "2.13.1"
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+scalacOptions ++= Seq("-deprecation", "-feature", "-target:jvm-1.8", "-Ywarn-unused")
 
 val doobieVersion = "0.9.2"
 

@@ -1,3 +1,0 @@
-CREATE TABLE hat(name TEXT PRIMARY KEY);
-
-CREATE TABLE feather(name TEXT REFERENCES hat(name));

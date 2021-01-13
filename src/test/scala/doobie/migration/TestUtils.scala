@@ -1,18 +1,15 @@
 package doobie.migration
 
 import cats.effect.IO
-import cats.syntax.all._
-import doobie.util.transactor.Transactor.Aux
+import cats.instances.list._
+import cats.syntax.traverse._
+import doobie._
+import doobie.implicits._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
 
-
 object TestUtils {
-
-  import doobie._
-  import doobie.implicits._
-
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
 
   val testDbPrefix = "doobie_migration_test_"
@@ -23,9 +20,7 @@ object TestUtils {
 
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def withTestDb[A](testXa: Aux[IO, _], url: String, user: String, pass: String, uniqueTestDbNameSuffix: String)(f: Aux[IO, Unit] => IO[A]) = {
-    import doobie.implicits._
-    import cats.implicits._
+  def withTestDb[A](testXa: Transactor[IO], url: String, user: String, pass: String, uniqueTestDbNameSuffix: String)(f: Transactor[IO] => IO[A]) = {
 
     // setup
     val testDbName = getTestDbName(uniqueTestDbNameSuffix)

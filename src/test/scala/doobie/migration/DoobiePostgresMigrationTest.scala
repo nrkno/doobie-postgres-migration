@@ -103,12 +103,34 @@ class DoobiePostgresMigrationTest extends AnyFunSuite with IOMatchers {
   }
 
   test("fail on missing migration") {
-    TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "change_migrations") { xa =>
+    TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "missing_migrations") { xa =>
       for {
         // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was fixed by changing it to color
         migrations <- DoobiePostgresMigration.getMigrations(new File("./src/test/resources/migrations_test_working_1"))
         _ <- DoobiePostgresMigration.applyMigrations(migrations, "public").transact(xa)
         _ <- DoobiePostgresMigration.applyMigrations(migrations.tail, "public").transact(xa).attempt.flatMap {
+          case Left(_) => IO.unit
+          case Right(_) => IO.raiseError(new RuntimeException("Should have failed on missing migration"))
+        }
+      } yield ()
+    }
+  }
+
+  test("fail on changed migration") {
+    // change digest of first migration
+    def rewrite(ms: List[Migration]): List[Migration] =
+      ms match {
+        case m :: tail => Migration.create(m.id, "--- added comment\n" + m.up, m.down) :: tail
+        case Nil => sys.error("expected migrations")
+      }
+
+    TestUtils.withTestDb(hostXa, pgUrl, pgUser, pgPass, "change_migrations") { xa =>
+      for {
+        // here we image we have a "branch" where ribbon has a column color_spelling_mistake which was fixed by changing it to color
+        migrations <- DoobiePostgresMigration.getMigrations(new File("./src/test/resources/migrations_test_working_1"))
+        _ <- DoobiePostgresMigration.applyMigrations(migrations, "public").transact(xa)
+        changedMigrations = rewrite(migrations)
+        _ <- DoobiePostgresMigration.applyMigrations(changedMigrations, "public").transact(xa).attempt.flatMap {
           case Left(_) => IO.unit
           case Right(_) => IO.raiseError(new RuntimeException("Should have failed on missing migration"))
         }

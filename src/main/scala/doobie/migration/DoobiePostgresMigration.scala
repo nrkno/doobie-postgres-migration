@@ -1,16 +1,16 @@
 package doobie.migration
 
-import java.io.File
-import java.security.MessageDigest
-
-import org.slf4j.LoggerFactory
 import cats.effect.IO
-import doobie._
 import cats.instances.list._
 import cats.syntax.applicativeError._
 import cats.syntax.traverse._
+import doobie._
 import doobie.implicits._
+import org.slf4j.LoggerFactory
 
+import java.io.File
+import java.nio.file.Files
+import java.security.MessageDigest
 import scala.io.Source
 
 case class DoobiePostgresMigrationException(msg: String, ex: Exception = null) extends Exception(msg, ex)
@@ -76,7 +76,12 @@ object DoobiePostgresMigration {
 
   def getMigrations(migrationsDir: File): IO[List[Migration]] = {
 
-    def readLinesAsIO(file: File) = IO(Source.fromFile(file).getLines.mkString("\n"))
+    def readLinesAsIO(file: File) = IO {
+      val source = Source.fromFile(file)
+      val ret = source.getLines.mkString("\n")
+      source.close()
+      ret
+    }
 
     def getDataAndValidateMatchingFilename(file: File): IO[MigrationFromFile] = file.getName match {
       case MigrationFileRegex(id, "up") => for {

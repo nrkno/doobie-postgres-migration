@@ -79,9 +79,17 @@ Using docker you can start (on port 5431) it as follows:
 docker rm -f doobie-migrations-postgres; docker run --name doobie-migrations-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5431:5432 -d postgres:11.2
 ```
 
+or use the supplied docker-compose setup with
+
+```
+docker-compose up
+```
+
 To execute all tests do this:
 
-`sbt test`
+```
+sbt test
+```
 
 ## Other DBs
 This library has a dependency on Postgres only because it is using `doobie.postgres` to transform `List[String]` to a PG Array. It also easier to make sure it is working correctly if only one DB is targeted.

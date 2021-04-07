@@ -6,7 +6,7 @@ scalaVersion := "2.13.1"
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 scalacOptions ++= Seq("-deprecation", "-feature", "-target:jvm-1.8", "-Ywarn-unused")
 
-val doobieVersion = "0.10.0"
+val doobieVersion = "0.12.1"
 
 libraryDependencies ++= Seq(
   "org.tpolecat" %% "doobie-core" % doobieVersion,
@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "ch.qos.logback" % "logback-core" % "1.2.3",
   "com.typesafe" % "config" % "1.3.2" % Test,
-  "org.scalatest" %% "scalatest" % "3.1.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.1.0" % Test
 )
 
 publishTo := {

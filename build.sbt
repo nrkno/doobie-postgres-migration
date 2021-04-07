@@ -1,6 +1,6 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.9.1"
+version := "0.10.0"
 description := "Postgresql schema migrations for doobie"
 scalaVersion := "2.13.1"
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8")

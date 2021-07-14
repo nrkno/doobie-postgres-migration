@@ -2,7 +2,7 @@ package doobie.migration
 
 import java.io.File
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import com.typesafe.config.ConfigFactory
 import doobie._
 import doobie.implicits._
@@ -17,7 +17,7 @@ class DoobiePostgresMigrationTest extends AnyFunSuite with IOMatchers {
   private lazy val pgUser = config.getString("postgres.user")
   private lazy val pgPass = config.getString("postgres.pass")
 
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
+  implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   // used only to create DBs
   lazy val hostXa: Transactor[IO] = Transactor.fromDriverManager[IO](

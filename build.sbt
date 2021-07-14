@@ -1,12 +1,12 @@
 name := "doobie-postgres-migration"
 organization := "no.nrk"
-version := "0.10.0"
+version := "0.13.4"
 description := "Postgresql schema migrations for doobie"
-scalaVersion := "2.13.1"
+crossScalaVersions := List("2.13.6", "3.0.1")
+scalaVersion := "2.13.6"
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
-scalacOptions ++= Seq("-deprecation", "-feature", "-target:jvm-1.8", "-Ywarn-unused")
 
-val doobieVersion = "0.12.1"
+val doobieVersion = "0.13.4"
 
 libraryDependencies ++= Seq(
   "org.tpolecat" %% "doobie-core" % doobieVersion,
@@ -14,8 +14,8 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "ch.qos.logback" % "logback-core" % "1.2.3",
-  "com.typesafe" % "config" % "1.3.2" % Test,
-  "org.scalatest" %% "scalatest" % "3.1.0" % Test
+  "com.typesafe" % "config" % "1.4.1" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.9" % Test
 )
 
 publishTo := {

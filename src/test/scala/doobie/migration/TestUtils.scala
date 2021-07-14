@@ -1,6 +1,6 @@
 package doobie.migration
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.instances.list._
 import cats.syntax.traverse._
 import doobie._
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext
 
 object TestUtils {
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
+  implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   val testDbPrefix = "doobie_migration_test_"
 
@@ -49,6 +49,6 @@ object TestUtils {
       res <- f(thisTestXa)
     } yield res
 
-    testIO.unsafeRunSync
+    testIO.unsafeRunSync()
   }
 }

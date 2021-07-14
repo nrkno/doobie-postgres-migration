@@ -1,7 +1,6 @@
 package doobie.migration
 
 import cats.effect.IO
-import cats.instances.list._
 import cats.syntax.applicativeError._
 import cats.syntax.traverse._
 import doobie._
@@ -36,21 +35,7 @@ object DoobiePostgresMigration {
   private val MigrationFileRegex = """^(\d{10}_.*)\.(up|down)\.sql$""".r
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  /** Execute all migrations based in the directory. This will apply downs for any files present.
-    * @param migrationsDir
-    * @param xa
-    * @param downMode if true, downs WILL be applied (so: downMode should be disabled in prod)
-    * @param schema the name of the database schema (not the schema migrations)
-    */
-  def execute(migrationsDir: File, xa: Transactor[IO], schema: String = "public"): Unit =
-    try executeMigrationsIO(migrationsDir, xa, schema).unsafeRunSync()
-    catch {
-      case ex: Exception =>
-        logger.error(s"Could not apply schema migrations:\n${ex.getMessage}", ex)
-    }
-
   def executeMigrationsIO(migrationsDir: File, xa: Transactor[IO], schema: String = "public"): IO[List[Migration]] = {
-    import doobie.implicits._
     for {
       migrations <- getMigrations(migrationsDir)
       _ <- applyMigrations(migrations, schema).transact(xa)
@@ -70,7 +55,7 @@ object DoobiePostgresMigration {
 
     def readLinesAsIO(file: File) = IO {
       val source = Source.fromFile(file)
-      val ret = source.getLines.mkString("\n")
+      val ret = source.getLines().mkString("\n")
       source.close()
       ret
     }
@@ -222,8 +207,9 @@ object DoobiePostgresMigration {
         existingHashByIdFromDb.get(id) match {
           case None => // DB didn't know about this file, so we will apply ups
             val upMigrations = for {
-              _ <- Update0(curr.up, None).run.handleErrorWith { case ex: Exception =>
-                FC.raiseError(DoobiePostgresMigrationException(s"Failed while applying ups from '$id':\n${curr.up}", ex))
+              _ <- Update0(curr.up, None).run.handleErrorWith {
+                case ex: Exception => FC.raiseError(DoobiePostgresMigrationException(s"Failed while applying ups from '$id':\n${curr.up}", ex))
+                case other => FC.raiseError(other)
               }
               _ <-
                 if (id < highestCurrentId) {

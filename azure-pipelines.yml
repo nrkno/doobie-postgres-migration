@@ -18,7 +18,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      sbt test
+      sbt +test
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
@@ -35,7 +35,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      sbt test
+      sbt +test
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
@@ -52,7 +52,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      sbt test
+      sbt +test
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
@@ -69,7 +69,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      sbt test
+      sbt +test
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
@@ -79,6 +79,6 @@ steps:
 - task: DownloadSecureFile@1
   inputs:
     secureFile: .credentials
-- script: sbt publish
+- script: sbt +publish
   env:
     FILES: $(Agent.TempDirectory)

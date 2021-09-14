@@ -1,16 +1,15 @@
 package doobie.migration
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
 import cats.instances.list._
 import cats.syntax.traverse._
 import doobie._
 import doobie.implicits._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
+import cats.effect.unsafe.implicits.global
 
 object TestUtils {
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   val testDbPrefix = "doobie_migration_test_"
 

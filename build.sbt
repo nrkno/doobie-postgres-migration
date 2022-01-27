@@ -1,10 +1,10 @@
-val doobieVersion = "1.0.0-RC1"
+val doobieVersion = "1.0.0-RC2"
 
 name := "doobie-postgres-migration"
 organization := "no.nrk"
 version := doobieVersion
 description := "Postgresql schema migrations for doobie"
-crossScalaVersions := List("2.13.6", "3.0.2")
+crossScalaVersions := List("2.13.6", "3.1.1")
 scalaVersion := "2.13.6"
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 
